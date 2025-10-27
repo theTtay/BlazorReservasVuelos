@@ -2,6 +2,7 @@ using BlazorReservasVuelos.Data;
 using BlazorReservasVuelos.Services;
 using BlazorReservasVuelos.Components;
 using Microsoft.EntityFrameworkCore;
+using MudBlazor.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,6 +16,7 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 builder.Services.AddScoped<IVueloService, VueloService>();
 builder.Services.AddScoped<IDestinoService, DestinoService>();
+builder.Services.AddMudServices();
 
 var app = builder.Build();
 
