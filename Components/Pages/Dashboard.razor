@@ -1,0 +1,103 @@
+﻿@page "/dashboard"
+@using BlazorReservasVuelos.Services
+@rendermode InteractiveServer
+
+@inject IVueloService VueloService
+
+<PageTitle>Dashboard</PageTitle>
+
+<h3>Dashboard de Reservas 🚀</h3>
+<hr />
+
+@if (TotalVuelos == 0 && !IsLoading)
+{
+    <p class="alert alert-warning">No hay datos de vuelos para mostrar.</p>
+}
+else if (IsLoading)
+{
+    <p>Cargando estadísticas...</p>
+}
+else
+{
+    <div class="row">
+
+        <div class="col-md-4 mb-4">
+            <div class="card text-white bg-primary">
+                <div class="card-body">
+                    <h5 class="card-title">Total de Vuelos Reservados</h5>
+                    <p class="card-text display-4">@TotalVuelos</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-4">
+            <div class="card text-white bg-success">
+                <div class="card-body">
+                    <h5 class="card-title">Total de Asientos Vendidos</h5>
+                    <p class="card-text display-4">@TotalAsientos</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-4">
+            <div class="card text-white bg-info">
+                <div class="card-body">
+                    <h5 class="card-title">Destino Más Popular</h5>
+                    <p class="card-text display-4">@DestinoMasPopular</p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <h4>Top 5 Destinos</h4>
+    @if (TopDestinos.Any())
+    {
+        <ul class="list-group">
+            @foreach (var item in TopDestinos)
+            {
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    @item.Key
+                    <span class="badge bg-secondary rounded-pill">@item.Value reservas</span>
+                </li>
+            }
+        </ul>
+    }
+}
+
+@code {
+    private int TotalVuelos { get; set; }
+    private int TotalAsientos { get; set; }
+    private string DestinoMasPopular { get; set; } = "N/A";
+    private Dictionary<string, int> TopDestinos = new();
+    private bool IsLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarEstadisticas();
+        IsLoading = false;
+    }
+
+    private async Task CargarEstadisticas()
+    {
+        var todosLosVuelos = await VueloService.ObtenerVuelos();
+
+        // 1. Total de Vuelos
+        TotalVuelos = todosLosVuelos.Count;
+
+        // 2. Total de Asientos
+        TotalAsientos = todosLosVuelos.Sum(v => v.Asientos);
+
+        // 3. Destino Más Popular (y Top Destinos)
+        TopDestinos = todosLosVuelos
+            .GroupBy(v => v.Destino)
+            .Select(g => new { Destino = g.Key, Count = g.Count() })
+            .OrderByDescending(x => x.Count)
+            .ToDictionary(x => x.Destino, x => x.Count);
+
+        if (TopDestinos.Any())
+        {
+            DestinoMasPopular = TopDestinos.First().Key;
+        }
+    }
+}

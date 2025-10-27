@@ -1,0 +1,127 @@
+﻿@page "/reservarvuelo"
+@page "/reservarvuelo/{Id:int}"
+@rendermode InteractiveServer
+
+@using BlazorReservasVuelos.Models
+@using BlazorReservasVuelos.Services
+@inject IVueloService VueloService
+@inject IDestinoService DestinoService
+@inject NavigationManager NavigationManager
+
+<PageTitle>Reservar Vuelo</PageTitle>
+
+@if (Vuelo.Id == 0 && Id.HasValue)
+{
+    <p>Cargando vuelo para edición...</p>
+}
+else
+{
+    <h3>@(Id.HasValue ? "Editar Vuelo" : "Nueva Reserva de Vuelo")</h3>
+    <hr />
+
+    <EditForm Model="@Vuelo" OnValidSubmit="HandleValidSubmit" FormName="FlightForm">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="mb-3">
+            <label for="pasajero" class="form-label">Nombre del Pasajero</label>
+            <InputText id="pasajero" class="form-control" @bind-Value="Vuelo.Pasajero" required />
+        </div>
+
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label for="origen" class="form-label">Lugar de Salida (Origen)</label>
+                <InputSelect id="origen" class="form-select" @bind-Value="Vuelo.Origen" required>
+                    <option value="">Seleccione Origen</option>
+                    @foreach (var lugar in OrigenesDisponibles)
+                    {
+                        <option value="@lugar.NombreCiudad">@lugar.NombreCiudad</option>
+                    }
+                </InputSelect>
+                <ValidationMessage For="@(() => Vuelo.Origen)" />
+            </div>
+
+            <div class="col-md-6 mb-3">
+                <label for="destino" class="form-label">Lugar de Llegada (Destino)</label>
+                <InputSelect id="destino" class="form-select" @bind-Value="Vuelo.Destino" required>
+                    <option value="">Seleccione Destino</option>
+                    @foreach (var lugar in DestinosDisponibles)
+                    {
+                        <option value="@lugar.NombreCiudad">@lugar.NombreCiudad</option>
+                    }
+                </InputSelect>
+                <ValidationMessage For="@(() => Vuelo.Destino)" />
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label for="horario" class="form-label">Horario Disponible</label>
+            <InputSelect id="horario" class="form-select" @bind-Value="Vuelo.Horario" required>
+                <option value="">Seleccione Horario</option>
+                @foreach (var hora in HorariosDisponibles)
+                {
+                    <option value="@hora">@hora</option>
+                }
+            </InputSelect>
+        </div>
+
+        <div class="mb-3">
+            <label for="asientos" class="form-label">Cantidad de Asientos</label>
+            <InputNumber id="asientos" class="form-control" @bind-Value="Vuelo.Asientos" required />
+        </div>
+
+        <button type="submit" class="btn btn-primary">@(Id.HasValue ? "Actualizar Vuelo" : "Reservar Vuelo")</button>
+        <a href="/misvuelos" class="btn btn-secondary">Cancelar</a>
+    </EditForm>
+}
+
+@code {
+    [Parameter]
+    public int? Id { get; set; }
+
+    private Vuelo Vuelo = new Vuelo();
+
+    // Listas dinámicas que se poblarán desde IDestinoService
+    private List<Destino> OrigenesDisponibles = new();
+    private List<Destino> DestinosDisponibles = new();
+
+    // Lista de horarios codificada (puedes moverla a una gestión si lo deseas)
+    private List<string> HorariosDisponibles = new() { "06:00 AM", "10:30 AM", "03:45 PM", "08:00 PM" };
+
+    protected override async Task OnInitializedAsync()
+    {
+        // 1. Cargar las listas de destinos y orígenes al iniciar la página
+        await CargarListasDesplegables();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        // 2. Lógica para cargar el vuelo si estamos en modo edición (Id existe)
+        if (Id.HasValue && Id.Value != 0)
+        {
+            Vuelo = await VueloService.ObtenerVueloPorId(Id.Value);
+            if (Vuelo.Id == 0)
+            {
+                NavigationManager.NavigateTo("/reservarvuelo");
+            }
+        }
+    }
+
+    private async Task CargarListasDesplegables()
+    {
+        // Obtiene solo los destinos marcados como origen (PuedeSerOrigen = true)
+        OrigenesDisponibles = await DestinoService.ObtenerOrigenesDisponibles();
+
+        // Obtiene solo los destinos marcados como destino (PuedeSerDestino = true)
+        DestinosDisponibles = await DestinoService.ObtenerDestinosDisponibles();
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        // Guardar o actualizar el vuelo usando IVueloService
+        await VueloService.GuardarVuelo(Vuelo);
+
+        // Redirige a la lista de vuelos
+        NavigationManager.NavigateTo("/misvuelos");
+    }
+}

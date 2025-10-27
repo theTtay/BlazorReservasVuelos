@@ -1,0 +1,120 @@
+﻿@page "/misvuelos"
+@rendermode InteractiveServer
+
+@using BlazorReservasVuelos.Models
+@using BlazorReservasVuelos.Services
+@inject IVueloService VueloService
+@inject NavigationManager NavigationManager
+
+<PageTitle>Mis Vuelos</PageTitle>
+
+<h3>Mis Reservas de Vuelos</h3>
+<hr />
+
+<div class="card p-3 mb-4 bg-light shadow-sm">
+    <h5 class="card-title">Filtros de Búsqueda</h5>
+    <div class="row">
+        <div class="col-md-3 mb-2">
+            <input type="text" class="form-control" placeholder="Buscar por Pasajero..." @bind="pasajeroFiltro" @bind:event="oninput" />
+        </div>
+        <div class="col-md-3 mb-2">
+            <input type="text" class="form-control" placeholder="Buscar por Origen..." @bind="origenFiltro" @bind:event="oninput" />
+        </div>
+        <div class="col-md-3 mb-2">
+            <input type="text" class="form-control" placeholder="Buscar por Destino..." @bind="destinoFiltro" @bind:event="oninput" />
+        </div>
+        <div class="col-md-3 mb-2">
+            <button class="btn btn-info w-100" @onclick="CargarVuelos">Buscar</button>
+        </div>
+    </div>
+    <div class="row mt-2">
+        <div class="col-12">
+            <button class="btn btn-secondary w-100" @onclick="LimpiarFiltros">Limpiar Filtros</button>
+        </div>
+    </div>
+</div>
+@if (vuelos == null)
+{
+    <p><em>Cargando reservas...</em></p>
+}
+else if (!vuelos.Any())
+{
+    <p class="alert alert-info">No se encontraron vuelos con los criterios de búsqueda. <a href="/reservarvuelo">¡Reserva uno ahora!</a></p>
+}
+else
+{
+    <div class="row">
+        @foreach (var vuelo in vuelos)
+        {
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title text-primary">Vuelo #@vuelo.Id</h5>
+                        <h6 class="card-subtitle mb-2 text-muted">Pasajero: @vuelo.Pasajero</h6>
+                        <p class="card-text">
+                            <i class="bi bi-airplane-fill"></i> **@vuelo.Origen** <i class="bi bi-arrow-right-short"></i> **@vuelo.Destino** <br />
+                            <small class="text-secondary">Fecha: @vuelo.FechaVuelo.ToShortDateString() - Hora: **@vuelo.Horario**</small> <br />
+                            <small class="text-dark">Asientos Reservados: **@vuelo.Asientos**</small>
+                        </p>
+
+                        <div class="d-flex justify-content-between">
+                            <button class="btn btn-sm btn-warning" @onclick="() => EditarVuelo(vuelo.Id)">
+                                <i class="bi bi-pencil"></i> Editar
+                            </button>
+                            <button class="btn btn-sm btn-danger" @onclick="() => EliminarVuelo(vuelo.Id)">
+                                <i class="bi bi-trash"></i> Eliminar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    private List<Vuelo> vuelos;
+
+    // Propiedades para los filtros
+    private string? origenFiltro;
+    private string? destinoFiltro;
+    private string? pasajeroFiltro;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarVuelos();
+    }
+
+    private async Task CargarVuelos()
+    {
+        // Llama al servicio usando el nuevo método de búsqueda con los filtros
+        vuelos = await VueloService.BuscarVuelos(
+            origenFiltro,
+            destinoFiltro,
+            pasajeroFiltro
+        );
+    }
+
+    private void LimpiarFiltros()
+    {
+        // Resetea las propiedades de filtro
+        origenFiltro = null;
+        destinoFiltro = null;
+        pasajeroFiltro = null;
+        // Recarga la lista para mostrar todos los vuelos nuevamente
+        CargarVuelos();
+    }
+
+    private void EditarVuelo(int id)
+    {
+        // Redirige al formulario, pasando el ID para que cargue los datos
+        NavigationManager.NavigateTo($"/reservarvuelo/{id}");
+    }
+
+    private async Task EliminarVuelo(int id)
+    {
+        // En un proyecto real, agregarías una confirmación aquí.
+        await VueloService.EliminarVuelo(id);
+        await CargarVuelos(); // Recarga la lista para actualizar la vista
+    }
+}

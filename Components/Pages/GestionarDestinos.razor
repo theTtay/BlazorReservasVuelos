@@ -1,0 +1,160 @@
+﻿<h3>GestionarDestinos</h3>
+
+@code {
+
+}
+@page "/gestionardestinos"
+@rendermode InteractiveServer
+
+@using BlazorReservasVuelos.Models
+@using BlazorReservasVuelos.Services
+@inject IDestinoService DestinoService
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
+
+<PageTitle>Gestionar Destinos</PageTitle>
+
+<h3>Gestión de Destinos Aéreos</h3>
+<hr />
+
+<div class="card shadow mb-4">
+    <div class="card-header bg-dark text-white">
+        <h5>@(destinoAEditar.Id == 0 ? "Crear Nuevo Destino" : $"Editar Destino: {destinoAEditar.NombreCiudad}")</h5>
+    </div>
+    <div class="card-body">
+        <EditForm Model="@destinoAEditar" OnValidSubmit="GuardarDestino">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+
+            <div class="row">
+                <div class="col-md-8 mb-3">
+                    <label for="nombre" class="form-label">Nombre de la Ciudad/Destino</label>
+                    <InputText id="nombre" class="form-control" @bind-Value="destinoAEditar.NombreCiudad" />
+                </div>
+                <div class="col-md-4 mb-3 d-flex align-items-center">
+                    <div class="form-check pt-4">
+                        <InputCheckbox id="internacional" class="form-check-input" @bind-Value="destinoAEditar.EsInternacional" />
+                        <label class="form-check-label" for="internacional">Es Vuelo Internacional</label>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <div class="form-check">
+                        <InputCheckbox id="esOrigen" class="form-check-input" @bind-Value="destinoAEditar.PuedeSerOrigen" />
+                        <label class="form-check-label" for="esOrigen">Permitir como **Lugar de Salida** (Origen)</label>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <div class="form-check">
+                        <InputCheckbox id="esDestino" class="form-check-input" @bind-Value="destinoAEditar.PuedeSerDestino" />
+                        <label class="form-check-label" for="esDestino">Permitir como **Lugar de Llegada** (Destino)</label>
+                    </div>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary">
+                @(destinoAEditar.Id == 0 ? "Guardar Destino" : "Actualizar Destino")
+            </button>
+            @if (destinoAEditar.Id != 0)
+            {
+                <button type="button" class="btn btn-secondary" @onclick="InicializarNuevoDestino">
+                    Cancelar Edición
+                </button>
+            }
+        </EditForm>
+    </div>
+</div>
+
+<h4>Destinos Registrados (@destinos.Count)</h4>
+
+@if (destinos == null)
+{
+    <p><em>Cargando destinos...</em></p>
+}
+else if (!destinos.Any())
+{
+    <p class="alert alert-info">Aún no hay destinos registrados.</p>
+}
+else
+{
+    <table class="table table-striped table-hover">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Ciudad</th>
+                <th>Tipo</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var destino in destinos)
+            {
+                <tr>
+                    <td>@destino.Id</td>
+                    <td>@destino.NombreCiudad</td>
+                    <td>
+                        <span class="badge @(destino.EsInternacional ? "bg-warning text-dark" : "bg-info")">
+                            @(destino.EsInternacional ? "Internacional" : "Nacional")
+                        </span>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-warning" @onclick="() => EditarDestino(destino.Id)">
+                            Editar
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger ms-2" @onclick="() => EliminarDestino(destino.Id)">
+                            Eliminar
+                        </button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+
+@code {
+    private List<Destino> destinos = new List<Destino>();
+    private Destino destinoAEditar = new Destino();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarDestinos();
+        InicializarNuevoDestino();
+    }
+
+    private async Task CargarDestinos()
+    {
+        destinos = await DestinoService.ObtenerDestinos();
+    }
+
+    private void InicializarNuevoDestino()
+    {
+        // Reinicia el formulario para un nuevo registro
+        destinoAEditar = new Destino();
+    }
+
+    private async Task GuardarDestino()
+    {
+        await DestinoService.GuardarDestino(destinoAEditar);
+
+        // Recarga la lista y limpia el formulario
+        await CargarDestinos();
+        InicializarNuevoDestino();
+    }
+
+    private async Task EditarDestino(int id)
+    {
+        // Carga el destino seleccionado al formulario para editar
+        destinoAEditar = await DestinoService.ObtenerDestinoPorId(id);
+    }
+
+    private async Task EliminarDestino(int id)
+    {
+        // Confirmación simple antes de eliminar
+        if (await JSRuntime.InvokeAsync<bool>("confirm", $"¿Está seguro de que desea eliminar el destino con ID {id}?"))
+        {
+            await DestinoService.EliminarDestino(id);
+            await CargarDestinos(); // Recarga la lista
+        }
+    }
+}
