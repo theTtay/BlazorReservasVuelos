@@ -1,0 +1,63 @@
+﻿@page "/gestionaraviones/editar/{id:int}"
+@using BlazorReservasVuelos.Models
+@using BlazorReservasVuelos.Services
+@inject IAvionService AvionService
+@inject NavigationManager NavigationManager
+@rendermode InteractiveServer
+
+<PageTitle>@Title Avión</PageTitle>
+
+<h3>@Title Avión</h3>
+
+<MudCard Class="pa-4">
+    <MudCardContent>
+        <EditForm Model="@avion" OnValidSubmit="GuardarAvion">
+            <DataAnnotationsValidator />
+            <MudGrid>
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="avion.Modelo" Label="Modelo" For="@(() => avion.Modelo)" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudNumericField @bind-Value="avion.Capacidad" Label="Capacidad de Asientos" For="@(() => avion.Capacidad)" Min="1" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="avion.NumeroSerie" Label="Número de Serie" For="@(() => avion.NumeroSerie)" />
+                </MudItem>
+            </MudGrid>
+            <MudCardActions Class="pt-4">
+                <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary">
+                    Guardar
+                </MudButton>
+                <MudButton Href="/gestionaraviones" Variant="Variant.Text" Color="Color.Secondary">
+                    Cancelar
+                </MudButton>
+            </MudCardActions>
+        </EditForm>
+    </MudCardContent>
+</MudCard>
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private Avion avion = new Avion();
+    private string Title => Id == 0 ? "Nuevo" : "Editar";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Id != 0)
+        {
+            var existingAvion = await AvionService.GetAvionByIdAsync(Id);
+            if (existingAvion != null)
+            {
+                avion = existingAvion;
+            }
+        }
+    }
+
+    private async Task GuardarAvion()
+    {
+        await AvionService.SaveAvionAsync(avion);
+        NavigationManager.NavigateTo("/gestionaraviones");
+    }
+}

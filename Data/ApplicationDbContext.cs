@@ -16,5 +16,9 @@ namespace BlazorReservasVuelos.Data
         // Propiedad DbSet que mapea el modelo Vuelo a la tabla "Vuelos" en la DB
         public DbSet<Vuelo> Vuelos { get; set; }
         public DbSet<Destino> Destinos { get; set; }
+        public DbSet<Avion> Aviones { get; set; }
+        public DbSet<Piloto> Pilotos { get; set; }
+        public DbSet<Horario> Horarios { get; set; }
+
     }
 }

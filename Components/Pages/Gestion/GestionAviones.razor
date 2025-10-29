@@ -1,0 +1,67 @@
+﻿@page "/gestionaraviones"
+@using BlazorReservasVuelos.Models
+@using BlazorReservasVuelos.Services
+@inject IAvionService AvionService
+@inject NavigationManager NavigationManager
+@rendermode InteractiveServer
+
+<PageTitle>Gestión de Aviones</PageTitle>
+
+<h3>Gestión de Aviones</h3>
+
+<MudButton Href="/gestionaraviones/editar/0" Variant="Variant.Filled" Color="Color.Primary" Class="mb-3">
+    Agregar Nuevo Avión
+</MudButton>
+
+<MudTable Items="@aviones" Hover="true" Breakpoint="Breakpoint.Sm" Loading="@loading">
+    <HeaderContent>
+        <MudTh>Modelo</MudTh>
+        <MudTh>Capacidad</MudTh>
+        <MudTh>No. Serie</MudTh>
+        <MudTh>Acciones</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="Modelo">@context.Modelo</MudTd>
+        <MudTd DataLabel="Capacidad">@context.Capacidad</MudTd>
+        <MudTd DataLabel="No. Serie">@context.NumeroSerie</MudTd>
+        <MudTd DataLabel="Acciones">
+            <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Warning" Size="Size.Small" OnClick="@(() => EditarAvion(context.Id))" />
+            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="@(() => EliminarAvion(context.Id))" />
+        </MudTd>
+    </RowTemplate>
+    <NoRecordsContent>
+        <MudText>No se encontraron aviones.</MudText>
+    </NoRecordsContent>
+    <LoadingContent>
+        <MudProgressCircular Indeterminate="true" />
+    </LoadingContent>
+</MudTable>
+
+@code {
+    private List<Avion> aviones = new List<Avion>();
+    private bool loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAviones();
+    }
+
+    private async Task LoadAviones()
+    {
+        loading = true;
+        aviones = await AvionService.GetAvionesAsync();
+        loading = false;
+    }
+
+    private void EditarAvion(int id)
+    {
+        NavigationManager.NavigateTo($"/gestionaraviones/editar/{id}");
+    }
+
+    private async Task EliminarAvion(int id)
+    {
+        // En una aplicación real, aquí se usaría un diálogo de confirmación (MudDialog)
+        await AvionService.DeleteAvionAsync(id);
+        await LoadAviones();
+    }
+}

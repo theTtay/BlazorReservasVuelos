@@ -1,0 +1,77 @@
+﻿@page "/gestionarhorarios/editar/{id:int}"
+@using BlazorReservasVuelos.Models
+@using BlazorReservasVuelos.Services
+@inject IHorarioService HorarioService
+@inject NavigationManager NavigationManager
+@rendermode InteractiveServer
+
+<PageTitle>@Title Horario</PageTitle>
+
+<h3>@Title Horario</h3>
+
+<MudCard Class="pa-4">
+    <MudCardContent>
+        <EditForm Model="@horario" OnValidSubmit="GuardarHorario">
+            <DataAnnotationsValidator />
+            <MudGrid>
+                <MudItem xs="12" sm="6">
+                    <MudTimePicker Label="Hora de Salida" @bind-Time="HoraSalidaValue" Editable="true" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudTimePicker Label="Hora de Llegada" @bind-Time="HoraLlegadaValue" Editable="true" />
+                </MudItem>
+                <MudItem xs="12">
+                    <MudTextField @bind-Value="horario.Descripcion" Label="Descripción" For="@(() => horario.Descripcion)" />
+                </MudItem>
+            </MudGrid>
+            <MudCardActions Class="pt-4">
+                <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary">
+                    Guardar
+                </MudButton>
+                <MudButton Href="/gestionarhorarios" Variant="Variant.Text" Color="Color.Secondary">
+                    Cancelar
+                </MudButton>
+            </MudCardActions>
+        </EditForm>
+    </MudCardContent>
+</MudCard>
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private Horario horario = new Horario();
+    private string Title => Id == 0 ? "Nuevo" : "Editar";
+
+    // Propiedades de ayuda para enlazar MudTimePicker a TimeOnly
+    private TimeSpan? HoraSalidaValue
+    {
+        get => horario.HoraSalida.ToTimeSpan();
+        set => horario.HoraSalida = value.HasValue ? TimeOnly.FromTimeSpan(value.Value) : new TimeOnly();
+    }
+
+    private TimeSpan? HoraLlegadaValue
+    {
+        get => horario.HoraLlegada.ToTimeSpan();
+        set => horario.HoraLlegada = value.HasValue ? TimeOnly.FromTimeSpan(value.Value) : new TimeOnly();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Id != 0)
+        {
+            var existingHorario = await HorarioService.GetHorarioByIdAsync(Id);
+            if (existingHorario != null)
+            {
+                horario = existingHorario;
+            }
+        }
+    }
+
+    private async Task GuardarHorario()
+    {
+        // Actualiza el modelo antes de guardar (ya está manejado por las propiedades de ayuda)
+        await HorarioService.SaveHorarioAsync(horario);
+        NavigationManager.NavigateTo("/gestionarhorarios");
+    }
+}

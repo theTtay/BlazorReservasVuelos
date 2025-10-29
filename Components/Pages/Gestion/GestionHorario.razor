@@ -1,0 +1,63 @@
+﻿@page "/gestionarhorarios"
+@using BlazorReservasVuelos.Models
+@using BlazorReservasVuelos.Services
+@inject IHorarioService HorarioService
+@inject NavigationManager NavigationManager
+@rendermode InteractiveServer
+
+<PageTitle>Gestión de Horarios</PageTitle>
+
+<h3>Gestión de Horarios</h3>
+
+<MudButton Href="/gestionarhorarios/editar/0" Variant="Variant.Filled" Color="Color.Primary" Class="mb-3">
+    Agregar Nuevo Horario
+</MudButton>
+
+<MudTable Items="@horarios" Hover="true" Breakpoint="Breakpoint.Sm" Loading="@loading">
+    <HeaderContent>
+        <MudTh>Salida</MudTh>
+        <MudTh>Llegada</MudTh>
+        <MudTh>Descripción</MudTh>
+        <MudTh>Acciones</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="Salida">@context.HoraSalida.ToString("hh\\:mm")</MudTd>
+        <MudTd DataLabel="Llegada">@context.HoraLlegada.ToString("hh\\:mm")</MudTd>
+        <MudTd DataLabel="Descripción">@context.Descripcion</MudTd>
+        <MudTd DataLabel="Acciones">
+            <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Warning" Size="Size.Small" OnClick="@(() => EditarHorario(context.Id))" />
+            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="@(() => EliminarHorario(context.Id))" />
+        </MudTd>
+    </RowTemplate>
+    <NoRecordsContent>
+        <MudText>No se encontraron horarios.</MudText>
+    </NoRecordsContent>
+</MudTable>
+
+@code {
+    private List<Horario> horarios = new List<Horario>();
+    private bool loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadHorarios();
+    }
+
+    private async Task LoadHorarios()
+    {
+        loading = true;
+        horarios = await HorarioService.GetHorariosAsync();
+        loading = false;
+    }
+
+    private void EditarHorario(int id)
+    {
+        NavigationManager.NavigateTo($"/gestionarhorarios/editar/{id}");
+    }
+
+    private async Task EliminarHorario(int id)
+    {
+        await HorarioService.DeleteHorarioAsync(id);
+        await LoadHorarios();
+    }
+}

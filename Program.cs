@@ -16,6 +16,9 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 builder.Services.AddScoped<IVueloService, VueloService>();
 builder.Services.AddScoped<IDestinoService, DestinoService>();
+builder.Services.AddScoped<IAvionService, AvionService>();
+builder.Services.AddScoped<IPilotoService, PilotoService>();
+builder.Services.AddScoped<IHorarioService, HorarioService>();
 builder.Services.AddMudServices();
 
 var app = builder.Build();

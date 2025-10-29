@@ -1,0 +1,63 @@
+﻿@page "/gestionarpilotos/editar/{id:int}"
+@using BlazorReservasVuelos.Models
+@using BlazorReservasVuelos.Services
+@inject IPilotoService PilotoService
+@inject NavigationManager NavigationManager
+@rendermode InteractiveServer
+
+<PageTitle>@Title Piloto</PageTitle>
+
+<h3>@Title Piloto</h3>
+
+<MudCard Class="pa-4">
+    <MudCardContent>
+        <EditForm Model="@piloto" OnValidSubmit="GuardarPiloto">
+            <DataAnnotationsValidator />
+            <MudGrid>
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="piloto.Nombre" Label="Nombre" For="@(() => piloto.Nombre)" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="piloto.NumeroLicencia" Label="Número de Licencia" For="@(() => piloto.NumeroLicencia)" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudNumericField @bind-Value="piloto.HorasVuelo" Label="Horas de Vuelo" For="@(() => piloto.HorasVuelo)" Min="0" />
+                </MudItem>
+            </MudGrid>
+            <MudCardActions Class="pt-4">
+                <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary">
+                    Guardar
+                </MudButton>
+                <MudButton Href="/gestionarpilotos" Variant="Variant.Text" Color="Color.Secondary">
+                    Cancelar
+                </MudButton>
+            </MudCardActions>
+        </EditForm>
+    </MudCardContent>
+</MudCard>
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private Piloto piloto = new Piloto();
+    private string Title => Id == 0 ? "Nuevo" : "Editar";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Id != 0)
+        {
+            var existingPiloto = await PilotoService.GetPilotoByIdAsync(Id);
+            if (existingPiloto != null)
+            {
+                piloto = existingPiloto;
+            }
+        }
+    }
+
+    private async Task GuardarPiloto()
+    {
+        await PilotoService.SavePilotoAsync(piloto);
+        NavigationManager.NavigateTo("/gestionarpilotos");
+    }
+}

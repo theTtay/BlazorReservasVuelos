@@ -1,0 +1,63 @@
+﻿@page "/gestionarpilotos"
+@using BlazorReservasVuelos.Models
+@using BlazorReservasVuelos.Services
+@inject IPilotoService PilotoService
+@inject NavigationManager NavigationManager
+@rendermode InteractiveServer
+
+<PageTitle>Gestión de Pilotos</PageTitle>
+
+<h3>Gestión de Pilotos</h3>
+
+<MudButton Href="/gestionarpilotos/editar/0" Variant="Variant.Filled" Color="Color.Primary" Class="mb-3">
+    Agregar Nuevo Piloto
+</MudButton>
+
+<MudTable Items="@pilotos" Hover="true" Breakpoint="Breakpoint.Sm" Loading="@loading">
+    <HeaderContent>
+        <MudTh>Nombre</MudTh>
+        <MudTh>Licencia</MudTh>
+        <MudTh>Horas de Vuelo</MudTh>
+        <MudTh>Acciones</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="Nombre">@context.Nombre</MudTd>
+        <MudTd DataLabel="Licencia">@context.NumeroLicencia</MudTd>
+        <MudTd DataLabel="HorasVuelo">@context.HorasVuelo</MudTd>
+        <MudTd DataLabel="Acciones">
+            <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Warning" Size="Size.Small" OnClick="@(() => EditarPiloto(context.Id))" />
+            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="@(() => EliminarPiloto(context.Id))" />
+        </MudTd>
+    </RowTemplate>
+    <NoRecordsContent>
+        <MudText>No se encontraron pilotos.</MudText>
+    </NoRecordsContent>
+</MudTable>
+
+@code {
+    private List<Piloto> pilotos = new List<Piloto>();
+    private bool loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadPilotos();
+    }
+
+    private async Task LoadPilotos()
+    {
+        loading = true;
+        pilotos = await PilotoService.GetPilotosAsync();
+        loading = false;
+    }
+
+    private void EditarPiloto(int id)
+    {
+        NavigationManager.NavigateTo($"/gestionarpilotos/editar/{id}");
+    }
+
+    private async Task EliminarPiloto(int id)
+    {
+        await PilotoService.DeletePilotoAsync(id);
+        await LoadPilotos();
+    }
+}
