@@ -17,13 +17,13 @@
     <HeaderContent>
         <MudTh>Salida</MudTh>
         <MudTh>Llegada</MudTh>
-        <MudTh>Descripción</MudTh>
+        <MudTh>DatosDeVuelo</MudTh>
         <MudTh>Acciones</MudTh>
     </HeaderContent>
     <RowTemplate>
         <MudTd DataLabel="Salida">@context.HoraSalida.ToString("hh\\:mm")</MudTd>
         <MudTd DataLabel="Llegada">@context.HoraLlegada.ToString("hh\\:mm")</MudTd>
-        <MudTd DataLabel="Descripción">@context.Descripcion</MudTd>
+        <MudTd DataLabel="DatosVuelo">@context.Descripcion</MudTd>
         <MudTd DataLabel="Acciones">
             <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Warning" Size="Size.Small" OnClick="@(() => EditarHorario(context.Id))" />
             <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="@(() => EliminarHorario(context.Id))" />
